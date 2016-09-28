@@ -16,20 +16,30 @@ RUN { \
 		echo 'opcache.enable_cli=1'; \
 	} > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
-RUN a2enmod rewrite expires
-
-VOLUME /var/www/html
-
 ENV WORDPRESS_VERSION 4.6.1
 ENV WORDPRESS_SHA1 027e065d30a64720624a7404a1820e6c6fff1202
 
 RUN set -x \
 	&& curl -o wordpress.tar.gz -fSL "https://wordpress.org/wordpress-${WORDPRESS_VERSION}.tar.gz" \
 	&& echo "$WORDPRESS_SHA1 *wordpress.tar.gz" | sha1sum -c - \
-# upstream tarballs include ./wordpress/ so this gives us /usr/src/wordpress
-	&& tar -xzf wordpress.tar.gz -C /usr/src/ \
+	&& tar -xzf wordpress.tar.gz \
+	&& cp -r wordpress/* . \
+	&& rm -Rf wordpress \
 	&& rm wordpress.tar.gz \
-	&& chown -R www-data:www-data /usr/src/wordpress
+	&& chown -R www-data:www-data .
+
+RUN { \
+		echo '<IfModule mod_rewrite.c>'; \
+		echo 'RewriteEngine On'; \
+		echo 'RewriteBase /'; \
+		echo 'RewriteRule ^index\.php$ - [L]'; \
+		echo 'RewriteCond %{REQUEST_FILENAME} !-f'; \
+		echo 'RewriteCond %{REQUEST_FILENAME} !-d'; \
+		echo 'RewriteRule . /index.php [L]'; \
+		echo '</IfModule>'; \
+	} > .htaccess
+
+RUN chown www-data:www-data .htaccess
 
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
