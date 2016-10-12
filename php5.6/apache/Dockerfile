@@ -16,13 +16,14 @@ RUN { \
 		echo 'opcache.enable_cli=1'; \
 	} > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
+RUN a2enmod rewrite expires
+
 # increase upload file size
 RUN { \
 		echo 'upload_max_filesize=64M'; \
 		echo 'post_max_size=64M'; \
 	} > /usr/local/etc/php/conf.d/upload-size.ini
 
-RUN a2enmod rewrite expires
 
 ENV WORDPRESS_VERSION 4.6.1
 ENV WORDPRESS_SHA1 027e065d30a64720624a7404a1820e6c6fff1202
