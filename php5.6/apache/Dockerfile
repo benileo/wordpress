@@ -16,6 +16,7 @@ RUN { \
 		echo 'opcache.enable_cli=1'; \
 	} > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
+# increase upload file size
 RUN { \
 		echo 'upload_max_filesize=64M'; \
 		echo 'post_max_size=64M'; \
