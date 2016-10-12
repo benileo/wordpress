@@ -18,7 +18,7 @@ RUN { \
 
 RUN a2enmod rewrite expires
 
-# increase upload file size
+# increase upload file size to 64
 RUN { \
 		echo 'upload_max_filesize=64M'; \
 		echo 'post_max_size=64M'; \
