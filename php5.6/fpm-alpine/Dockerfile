@@ -1,18 +1,33 @@
-FROM php:5.6-fpm
+FROM php:5.6-fpm-alpine
+
+# docker-entrypoint.sh dependencies
+RUN apk add --no-cache \
+# in theory, docker-entrypoint.sh is POSIX-compliant, but priority is a working, consistent image
+		bash \
+# BusyBox sed is not sufficient for some of our sed expressions
+		sed
 
 # install the PHP extensions we need
 RUN set -ex; \
 	\
-	apt-get update; \
-	apt-get install -y \
-		libjpeg-dev \
-		libpng12-dev \
+	apk add --no-cache --virtual .build-deps \
+		libjpeg-turbo-dev \
+		libpng-dev \
 	; \
-	rm -rf /var/lib/apt/lists/*; \
 	\
 	docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr; \
-	docker-php-ext-install gd mysqli opcache
-# TODO consider removing the *-dev deps and only keeping the necessary lib* packages
+	docker-php-ext-install gd mysqli opcache; \
+	\
+	runDeps="$( \
+		scanelf --needed --nobanner --recursive \
+			/usr/local/lib/php/extensions \
+			| awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
+			| sort -u \
+			| xargs -r apk info --installed \
+			| sort -u \
+	)"; \
+	apk add --virtual .wordpress-phpexts-rundeps $runDeps; \
+	apk del .build-deps
 
 # set recommended PHP.ini settings
 # see https://secure.php.net/manual/en/opcache.installation.php
